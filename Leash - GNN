@@ -1,0 +1,437 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "aecf4455",
+   "metadata": {
+    "_cell_guid": "b1076dfc-b9ad-4769-8c92-a6c4dae69d19",
+    "_uuid": "8f2839f25d086af736a60e9eeb907d3b93b6e0e5",
+    "execution": {
+     "iopub.execute_input": "2024-06-04T18:35:07.628019Z",
+     "iopub.status.busy": "2024-06-04T18:35:07.627593Z",
+     "iopub.status.idle": "2024-06-04T18:35:42.799747Z",
+     "shell.execute_reply": "2024-06-04T18:35:42.798434Z"
+    },
+    "papermill": {
+     "duration": 35.180479,
+     "end_time": "2024-06-04T18:35:42.802817",
+     "exception": false,
+     "start_time": "2024-06-04T18:35:07.622338",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Collecting rdkit\r\n",
+      "  Downloading rdkit-2023.9.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (3.9 kB)\r\n",
+      "Requirement already satisfied: numpy in /opt/conda/lib/python3.10/site-packages (from rdkit) (1.26.4)\r\n",
+      "Requirement already satisfied: Pillow in /opt/conda/lib/python3.10/site-packages (from rdkit) (9.5.0)\r\n",
+      "Downloading rdkit-2023.9.6-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (34.9 MB)\r\n",
+      "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m34.9/34.9 MB\u001b[0m \u001b[31m38.6 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\r\n",
+      "\u001b[?25h\u001b[33mWARNING: Error parsing requirements for aiohttp: [Errno 2] No such file or directory: '/opt/conda/lib/python3.10/site-packages/aiohttp-3.9.1.dist-info/METADATA'\u001b[0m\u001b[33m\r\n",
+      "\u001b[0mInstalling collected packages: rdkit\r\n",
+      "Successfully installed rdkit-2023.9.6\r\n",
+      "Collecting duckdb\r\n",
+      "  Downloading duckdb-1.0.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (762 bytes)\r\n",
+      "Downloading duckdb-1.0.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (18.5 MB)\r\n",
+      "\u001b[2K   \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m18.5/18.5 MB\u001b[0m \u001b[31m66.4 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\r\n",
+      "\u001b[?25h\u001b[33mWARNING: Error parsing requirements for aiohttp: [Errno 2] No such file or directory: '/opt/conda/lib/python3.10/site-packages/aiohttp-3.9.1.dist-info/METADATA'\u001b[0m\u001b[33m\r\n",
+      "\u001b[0mInstalling collected packages: duckdb\r\n",
+      "Successfully installed duckdb-1.0.0\r\n"
+     ]
+    }
+   ],
+   "source": [
+    "!pip install rdkit\n",
+    "!pip install duckdb"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "3d91b228",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-06-04T18:35:42.819909Z",
+     "iopub.status.busy": "2024-06-04T18:35:42.819435Z",
+     "iopub.status.idle": "2024-06-04T18:35:42.829018Z",
+     "shell.execute_reply": "2024-06-04T18:35:42.827692Z"
+    },
+    "papermill": {
+     "duration": 0.021026,
+     "end_time": "2024-06-04T18:35:42.831406",
+     "exception": false,
+     "start_time": "2024-06-04T18:35:42.810380",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "/kaggle/input/leash-BELKA/sample_submission.csv\n",
+      "/kaggle/input/leash-BELKA/train.parquet\n",
+      "/kaggle/input/leash-BELKA/test.parquet\n",
+      "/kaggle/input/leash-BELKA/train.csv\n",
+      "/kaggle/input/leash-BELKA/test.csv\n"
+     ]
+    }
+   ],
+   "source": [
+    "import os\n",
+    "for dirname, _, filenames in os.walk('/kaggle/input'):\n",
+    "    for filename in filenames:\n",
+    "        print(os.path.join(dirname, filename))"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "b2e41d34",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-06-04T18:35:42.848460Z",
+     "iopub.status.busy": "2024-06-04T18:35:42.847511Z",
+     "iopub.status.idle": "2024-06-04T18:35:48.767285Z",
+     "shell.execute_reply": "2024-06-04T18:35:48.766170Z"
+    },
+    "papermill": {
+     "duration": 5.93139,
+     "end_time": "2024-06-04T18:35:48.770274",
+     "exception": false,
+     "start_time": "2024-06-04T18:35:42.838884",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "\n",
+    "from rdkit import Chem\n",
+    "from rdkit.Chem import MACCSkeys\n",
+    "from rdkit.Chem import AllChem\n",
+    "from rdkit.Chem import rdmolops\n",
+    "\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.metrics import average_precision_score\n",
+    "from sklearn.preprocessing import OneHotEncoder\n",
+    "\n",
+    "import torch"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "7b5199f8",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-06-04T18:35:48.787359Z",
+     "iopub.status.busy": "2024-06-04T18:35:48.786377Z",
+     "iopub.status.idle": "2024-06-04T18:36:44.255197Z",
+     "shell.execute_reply": "2024-06-04T18:36:44.254104Z"
+    },
+    "papermill": {
+     "duration": 55.480326,
+     "end_time": "2024-06-04T18:36:44.258080",
+     "exception": false,
+     "start_time": "2024-06-04T18:35:48.777754",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "application/vnd.jupyter.widget-view+json": {
+       "model_id": "38aac056063b4490bf5607ebd01dd559",
+       "version_major": 2,
+       "version_minor": 0
+      },
+      "text/plain": [
+       "FloatProgress(value=0.0, layout=Layout(width='auto'), style=ProgressStyle(bar_color='black'))"
+      ]
+     },
+     "metadata": {},
+     "output_type": "display_data"
+    }
+   ],
+   "source": [
+    "import duckdb\n",
+    "import pandas as pd\n",
+    "\n",
+    "train_path = '/kaggle/input/leash-BELKA/train.parquet'\n",
+    "test_path = '/kaggle/input/leash-BELKA/test.parquet'\n",
+    "\n",
+    "con = duckdb.connect()\n",
+    "\n",
+    "df_mini_sample = con.query(f\"\"\"(SELECT *\n",
+    "                        FROM parquet_scan('{train_path}')\n",
+    "                        WHERE binds = 0\n",
+    "                        ORDER BY random()\n",
+    "                        LIMIT 30000\n",
+    "                       ) UNION ALL\n",
+    "                       (SELECT *\n",
+    "                        FROM parquet_scan('{train_path}')\n",
+    "                        WHERE binds = 1\n",
+    "                        ORDER BY random()\n",
+    "                        LIMIT 30000\n",
+    "                       )\n",
+    "                        \"\"\").df()\n",
+    "\n",
+    "con.close()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "d2874b00",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-06-04T18:36:44.275154Z",
+     "iopub.status.busy": "2024-06-04T18:36:44.274744Z",
+     "iopub.status.idle": "2024-06-04T18:36:44.293744Z",
+     "shell.execute_reply": "2024-06-04T18:36:44.292696Z"
+    },
+    "papermill": {
+     "duration": 0.030249,
+     "end_time": "2024-06-04T18:36:44.296146",
+     "exception": false,
+     "start_time": "2024-06-04T18:36:44.265897",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "#初始化和编码通用特征\n",
+    "class Featurizer:\n",
+    "    def __init__(self, allowable_sets):\n",
+    "        self.dim = 0\n",
+    "        self.features_mapping = {}\n",
+    "        for k, s in allowable_sets.items():\n",
+    "            s = sorted(list(s))\n",
+    "            self.features_mapping[k] = dict(zip(s, range(self.dim, len(s) + self.dim)))\n",
+    "            self.dim += len(s)\n",
+    "\n",
+    "    def encode(self, inputs):\n",
+    "        output = np.zeros((self.dim,))\n",
+    "        for name_feature, feature_mapping in self.features_mapping.items():\n",
+    "            feature = getattr(self, name_feature)(inputs)\n",
+    "            if feature not in feature_mapping:\n",
+    "                continue\n",
+    "            output[feature_mapping[feature]] = 1.0\n",
+    "        return output\n",
+    "\n",
+    "#继承Featurizer来提取原子的特征\n",
+    "class AtomFeaturizer(Featurizer):\n",
+    "    def __init__(self, allowable_sets):\n",
+    "        super().__init__(allowable_sets)\n",
+    "\n",
+    "    def symbol(self, atom):\n",
+    "        return atom.GetSymbol()\n",
+    "\n",
+    "    def n_valence(self, atom):\n",
+    "        return atom.GetTotalValence()\n",
+    "\n",
+    "    def n_hydrogens(self, atom):\n",
+    "        return atom.GetTotalNumHs()\n",
+    "\n",
+    "    def hybridization(self, atom):\n",
+    "        return atom.GetHybridization().name.lower()\n",
+    "    \n",
+    "#继承Featurizer来提取化学键的特征\n",
+    "class BondFeaturizer(Featurizer):\n",
+    "    def __init__(self, allowable_sets):\n",
+    "        super().__init__(allowable_sets)\n",
+    "        self.dim += 1\n",
+    "\n",
+    "    def encode(self, bond):\n",
+    "        output = np.zeros((self.dim,))\n",
+    "        if bond is None:\n",
+    "            output[-1] = 1.0\n",
+    "            return output\n",
+    "        output = super().encode(bond)\n",
+    "        return output\n",
+    "\n",
+    "    def bond_type(self, bond):\n",
+    "        return bond.GetBondType().name.lower()\n",
+    "\n",
+    "    def conjugated(self, bond):\n",
+    "        return bond.GetIsConjugated()\n",
+    "\n",
+    "#实例化特征化器\n",
+    "atom_featurizer = AtomFeaturizer(\n",
+    "    allowable_sets={\n",
+    "        \"symbol\": {\"B\", \"Br\", \"C\", \"Ca\", \"Cl\", \"F\", \"H\", \"I\", \"N\", \"Na\", \"O\", \"P\", \"S\"},\n",
+    "        \"n_valence\": {0, 1, 2, 3, 4, 5, 6},\n",
+    "        \"n_hydrogens\": {0, 1, 2, 3, 4},\n",
+    "        \"hybridization\": {\"s\", \"sp\", \"sp2\", \"sp3\"},\n",
+    "    }\n",
+    ")\n",
+    "\n",
+    "bond_featurizer = BondFeaturizer(\n",
+    "    allowable_sets={\n",
+    "        \"bond_type\": {\"single\", \"double\", \"triple\", \"aromatic\"},\n",
+    "        \"conjugated\": {True, False},\n",
+    "    }\n",
+    ")"
+   ]
+  }
+ ],
+ "metadata": {
+  "kaggle": {
+   "accelerator": "none",
+   "dataSources": [
+    {
+     "databundleVersionId": 8006601,
+     "sourceId": 67356,
+     "sourceType": "competition"
+    }
+   ],
+   "dockerImageVersionId": 30715,
+   "isGpuEnabled": false,
+   "isInternetEnabled": true,
+   "language": "python",
+   "sourceType": "notebook"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.13"
+  },
+  "papermill": {
+   "default_parameters": {},
+   "duration": 100.752047,
+   "end_time": "2024-06-04T18:36:45.427691",
+   "environment_variables": {},
+   "exception": null,
+   "input_path": "__notebook__.ipynb",
+   "output_path": "__notebook__.ipynb",
+   "parameters": {},
+   "start_time": "2024-06-04T18:35:04.675644",
+   "version": "2.5.0"
+  },
+  "widgets": {
+   "application/vnd.jupyter.widget-state+json": {
+    "state": {
+     "201d0acb96014a8eafea9c7fb49abb53": {
+      "model_module": "@jupyter-widgets/base",
+      "model_module_version": "1.2.0",
+      "model_name": "LayoutModel",
+      "state": {
+       "_model_module": "@jupyter-widgets/base",
+       "_model_module_version": "1.2.0",
+       "_model_name": "LayoutModel",
+       "_view_count": null,
+       "_view_module": "@jupyter-widgets/base",
+       "_view_module_version": "1.2.0",
+       "_view_name": "LayoutView",
+       "align_content": null,
+       "align_items": null,
+       "align_self": null,
+       "border": null,
+       "bottom": null,
+       "display": null,
+       "flex": null,
+       "flex_flow": null,
+       "grid_area": null,
+       "grid_auto_columns": null,
+       "grid_auto_flow": null,
+       "grid_auto_rows": null,
+       "grid_column": null,
+       "grid_gap": null,
+       "grid_row": null,
+       "grid_template_areas": null,
+       "grid_template_columns": null,
+       "grid_template_rows": null,
+       "height": null,
+       "justify_content": null,
+       "justify_items": null,
+       "left": null,
+       "margin": null,
+       "max_height": null,
+       "max_width": null,
+       "min_height": null,
+       "min_width": null,
+       "object_fit": null,
+       "object_position": null,
+       "order": null,
+       "overflow": null,
+       "overflow_x": null,
+       "overflow_y": null,
+       "padding": null,
+       "right": null,
+       "top": null,
+       "visibility": null,
+       "width": "auto"
+      }
+     },
+     "38aac056063b4490bf5607ebd01dd559": {
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "1.5.0",
+      "model_name": "FloatProgressModel",
+      "state": {
+       "_dom_classes": [],
+       "_model_module": "@jupyter-widgets/controls",
+       "_model_module_version": "1.5.0",
+       "_model_name": "FloatProgressModel",
+       "_view_count": null,
+       "_view_module": "@jupyter-widgets/controls",
+       "_view_module_version": "1.5.0",
+       "_view_name": "ProgressView",
+       "bar_style": "",
+       "description": "",
+       "description_tooltip": null,
+       "layout": "IPY_MODEL_201d0acb96014a8eafea9c7fb49abb53",
+       "max": 100.0,
+       "min": 0.0,
+       "orientation": "horizontal",
+       "style": "IPY_MODEL_fab339797fd946cea8783a3215010db4",
+       "value": 100.0
+      }
+     },
+     "fab339797fd946cea8783a3215010db4": {
+      "model_module": "@jupyter-widgets/controls",
+      "model_module_version": "1.5.0",
+      "model_name": "ProgressStyleModel",
+      "state": {
+       "_model_module": "@jupyter-widgets/controls",
+       "_model_module_version": "1.5.0",
+       "_model_name": "ProgressStyleModel",
+       "_view_count": null,
+       "_view_module": "@jupyter-widgets/base",
+       "_view_module_version": "1.2.0",
+       "_view_name": "StyleView",
+       "bar_color": "black",
+       "description_width": ""
+      }
+     }
+    },
+    "version_major": 2,
+    "version_minor": 0
+   }
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
